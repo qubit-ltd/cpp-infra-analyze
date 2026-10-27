@@ -55,6 +55,8 @@ jobs:
         run: rustup toolchain install nightly-2026-06-05 --profile minimal --component rustfmt --component clippy
       - name: Prepare local path dependencies
         run: ./.infra/bin/prepare-local-path-dependencies.sh
+      - name: Install Rust coverage command
+        run: cargo install cargo-llvm-cov --version 0.8.6 --locked
       - name: Run complete crate CI
         run: ./.infra/bin/ci-check.sh
       - name: Validate Pages configuration
