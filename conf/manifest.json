@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "owner": "cpp-infra-analyze",
+  "files": [
+    {
+      "source": "policy/clang-tidy.yaml",
+      "target": ".infra/analyze/policy/clang-tidy.yaml",
+      "sha256": "48ef1ec0ae77800a9cd2e263fb85be2dd6c8d52db6e3b5edd79d3b8325685eb6",
+      "executable": false
+    },
+    {
+      "source": "policy/policy.toml",
+      "target": ".infra/analyze/policy/policy.toml",
+      "sha256": "0c9d56a8cb227c99bea285cbc283a4df799c96ca396ff9903ed2b1a15a990ee7",
+      "executable": false
+    }
+  ],
+  "project_files": [
+    {
+      "source": "examples/config.toml",
+      "target": ".infra/analyze/config.toml",
+      "sha256": "f693b4f13c59350dd0f2cf38b08f4a11c90356b572cd0bdcda3d520b429ed132",
+      "executable": false
+    }
+  ]
+}

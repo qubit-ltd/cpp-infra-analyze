@@ -1,0 +1,6 @@
+# Copyright 2026 Haixing Hu. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+schema = 1
+mandatory_checks = ["clang-analyzer-*", "bugprone-*"]
+exception_rules = ["bugprone-unused-return-value"]
+reject_nolint = true

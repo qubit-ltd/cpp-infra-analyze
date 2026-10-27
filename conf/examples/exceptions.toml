@@ -1,0 +1,3 @@
+# Project-owned example. Only warnings allowed by policy can be excepted.
+schema = 1
+exceptions = []

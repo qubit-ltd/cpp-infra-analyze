@@ -1,0 +1,10 @@
+# Project-owned seed: match profile and target names to your actual project.
+# Adjust the profile mapping in .infra/project.toml and the CMake target list.
+schema = 1
+profile = "analysis"
+targets = ["example", "example-tests"]
+include_tests = true
+jobs = 4
+timeout_per_translation_unit_seconds = 180
+additive_checks = []
+# exceptions = ".infra/analyze/exceptions.toml"

@@ -1,0 +1,6 @@
+# Copyright 2026 Haixing Hu. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+Checks: '-*,clang-analyzer-*,bugprone-*'
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+FormatStyle: none
