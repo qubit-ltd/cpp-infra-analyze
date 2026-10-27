@@ -57,6 +57,8 @@ jobs:
         run: ./.infra/bin/prepare-local-path-dependencies.sh
       - name: Install Rust coverage command
         run: cargo install cargo-llvm-cov --version 0.8.6 --locked
+      - name: Install Rust audit command
+        run: cargo install cargo-audit --locked
       - name: Run complete crate CI
         run: ./.infra/bin/ci-check.sh
       - name: Validate Pages configuration
