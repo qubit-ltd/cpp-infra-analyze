@@ -17,7 +17,7 @@ use crate::error::Error;
 use crate::error::config;
 
 pub(crate) fn bytes(data: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(data))
+    Sha256::digest(data).iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 pub(crate) fn files(project: &Path, root: &Path) -> Result<Vec<PathBuf>, Error> {
@@ -58,7 +58,7 @@ pub(crate) fn project(root: &Path, config_only: bool, excluded: &[PathBuf]) -> R
         digest.update((content.len() as u64).to_le_bytes());
         digest.update(content);
     }
-    Ok(format!("{:x}", digest.finalize()))
+    Ok(digest.finalize().iter().map(|byte| format!("{byte:02x}")).collect())
 }
 
 fn collect(

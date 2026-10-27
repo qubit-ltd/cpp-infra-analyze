@@ -573,12 +573,12 @@ fn test_runtime_snapshot_accepts_matching_identity_and_rejects_tampering() {
     let binary = Path::new(env!("CARGO_BIN_EXE_cpp-infra-analyze"))
         .canonicalize()
         .expect("binary");
-    let mut snapshot = serde_json::json!({"schema":1,"bundle_id":"main-fixture","tools":[{"name":"cpp-infra-analyze","version":"0.1.0","revision":null,"protocol":1,"binary":binary,"executable_sha256":format!("{:x}",Sha256::digest(fs::read(&binary).expect("binary bytes")))}],"offline":true,"stale":false});
+    let mut snapshot = serde_json::json!({"schema":1,"bundle_id":"main-fixture","tools":[{"name":"cpp-infra-analyze","version":"0.1.0","revision":null,"protocol":1,"binary":binary,"executable_sha256":Sha256::digest(fs::read(&binary).expect("binary bytes")).iter().map(|byte| format!("{byte:02x}")).collect::<String>()}],"offline":true,"stale":false});
     let snapshot_path = root.join("runtime-snapshot.json");
     let context_path = root.join("test-context.json");
     let bytes = serde_json::to_vec(&snapshot).expect("snapshot JSON");
     fs::write(&snapshot_path, &bytes).expect("snapshot");
-    let mut context = serde_json::json!({"schema":1,"run_id":report["run_id"],"task_id":"analyze-test","bundle_id":"main-fixture","project":fixture.project,"profile":"analysis","source_digest":report["source_digest"],"config_digest":report["config_digest"],"report_root":root,"runtime_snapshot":snapshot_path,"runtime_snapshot_digest":format!("{:x}",Sha256::digest(&bytes))});
+    let mut context = serde_json::json!({"schema":1,"run_id":report["run_id"],"task_id":"analyze-test","bundle_id":"main-fixture","project":fixture.project,"profile":"analysis","source_digest":report["source_digest"],"config_digest":report["config_digest"],"report_root":root,"runtime_snapshot":snapshot_path,"runtime_snapshot_digest":Sha256::digest(&bytes).iter().map(|byte| format!("{byte:02x}")).collect::<String>()});
     fs::write(&context_path, serde_json::to_vec(&context).expect("context JSON")).expect("context");
     let output = fixture.run(&[
         "--report",
@@ -619,7 +619,12 @@ fn test_runtime_snapshot_accepts_matching_identity_and_rejects_tampering() {
     snapshot["tools"][0]["version"] = serde_json::json!("99.0.0");
     let bytes = serde_json::to_vec(&snapshot).expect("bad snapshot JSON");
     fs::write(&snapshot_path, &bytes).expect("identity tamper");
-    context["runtime_snapshot_digest"] = serde_json::json!(format!("{:x}", Sha256::digest(&bytes)));
+    context["runtime_snapshot_digest"] = serde_json::json!(
+        Sha256::digest(&bytes)
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    );
     fs::write(&context_path, serde_json::to_vec(&context).expect("context JSON")).expect("context");
     let output = fixture.run(&[
         "--report",
@@ -827,7 +832,10 @@ fn test_shared_run_context_produces_disjoint_artifact_paths() {
             let path = root.join(artifact["path"].as_str().expect("relative artifact"));
             assert_eq!(
                 artifact["sha256"],
-                format!("{:x}", Sha256::digest(fs::read(path).expect("artifact")))
+                Sha256::digest(fs::read(path).expect("artifact"))
+                    .iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>()
             );
         }
     }
@@ -1034,13 +1042,13 @@ fn test_runtime_snapshot_accepts_equal_content_copy_and_checks_both_files() {
         .expect("binary");
     let copied = fixture.bin.join("snapshot-analyze-copy");
     fs::copy(&binary, &copied).expect("same-content executable copy");
-    let mut snapshot = serde_json::json!({"schema":1,"bundle_id":"copy-fixture","tools":[{"name":"cpp-infra-analyze","version":"0.1.0","revision":null,"protocol":1,"binary":copied,"executable_sha256":format!("{:x}",Sha256::digest(fs::read(&binary).expect("binary bytes")))}],"offline":true,"stale":false});
+    let mut snapshot = serde_json::json!({"schema":1,"bundle_id":"copy-fixture","tools":[{"name":"cpp-infra-analyze","version":"0.1.0","revision":null,"protocol":1,"binary":copied,"executable_sha256":Sha256::digest(fs::read(&binary).expect("binary bytes")).iter().map(|byte| format!("{byte:02x}")).collect::<String>()}],"offline":true,"stale":false});
     let snapshot_path = root.join("copy-snapshot.json");
     let context_path = root.join("copy-context.json");
     let write_context = |snapshot: &Value| {
         let bytes = serde_json::to_vec(snapshot).expect("snapshot JSON");
         fs::write(&snapshot_path, &bytes).expect("snapshot");
-        let context = serde_json::json!({"schema":1,"run_id":report["run_id"],"task_id":"copy-check","bundle_id":"copy-fixture","project":fixture.project,"profile":"analysis","source_digest":report["source_digest"],"config_digest":report["config_digest"],"report_root":root,"runtime_snapshot":snapshot_path,"runtime_snapshot_digest":format!("{:x}",Sha256::digest(&bytes))});
+        let context = serde_json::json!({"schema":1,"run_id":report["run_id"],"task_id":"copy-check","bundle_id":"copy-fixture","project":fixture.project,"profile":"analysis","source_digest":report["source_digest"],"config_digest":report["config_digest"],"report_root":root,"runtime_snapshot":snapshot_path,"runtime_snapshot_digest":Sha256::digest(&bytes).iter().map(|byte| format!("{byte:02x}")).collect::<String>()});
         fs::write(&context_path, serde_json::to_vec(&context).expect("context JSON")).expect("context");
     };
     write_context(&snapshot);
@@ -1062,10 +1070,12 @@ fn test_runtime_snapshot_accepts_equal_content_copy_and_checks_both_files() {
     );
     fs::write(&copied, b"tampered executable copy").expect("tamper entry binary");
     assert_eq!(run().status.code(), Some(2), "entry.binary must match its declared SHA");
-    snapshot["tools"][0]["executable_sha256"] = serde_json::json!(format!(
-        "{:x}",
+    snapshot["tools"][0]["executable_sha256"] = serde_json::json!(
         Sha256::digest(fs::read(&copied).expect("tampered bytes"))
-    ));
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    );
     write_context(&snapshot);
     assert_eq!(
         run().status.code(),
@@ -1954,7 +1964,12 @@ fn test_malformed_run_context_fields_are_rejected_as_protocol_errors() {
         fs::write(&snapshot_path, &bytes).expect("snapshot");
         let mut context = base.clone();
         context["runtime_snapshot"] = serde_json::json!(snapshot_path);
-        context["runtime_snapshot_digest"] = serde_json::json!(format!("{:x}", Sha256::digest(&bytes)));
+        context["runtime_snapshot_digest"] = serde_json::json!(
+            Sha256::digest(&bytes)
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>()
+        );
         fs::write(&path, serde_json::to_vec(&context).expect("JSON")).expect("context");
         assert_eq!(
             fixture
@@ -2083,7 +2098,13 @@ fn test_warning_message_digest_exception_requires_exact_supported_digest() {
     )
     .expect("exception reference");
     for (digest, expected) in [
-        (format!("{:x}", Sha256::digest(message.as_bytes())), 0),
+        (
+            Sha256::digest(message.as_bytes())
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>(),
+            0,
+        ),
         ("0".repeat(64), 1),
         ("z".repeat(64), 2),
     ] {
